@@ -1,0 +1,65 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id  Int    @id @default(autoincrement())
+  name    String? @default("Anonymous User")
+  username String @unique
+  password String
+  blogs    Blog[]
+  followers Follow[] @relation("userFollowers")
+  following Follow[] @relation("userFollowing")
+  notifications Notification[]
+  reports Report[]
+}
+
+model Follow {
+  id        Int    @id @default(autoincrement())
+  follower  User   @relation("userFollowing", fields: [followerId], references: [id])
+  followerId Int
+  
+  following User   @relation("userFollowers", fields: [followingId], references: [id])
+  followingId Int
+
+  createdAt DateTime @default(now())
+}
+
+
+model Report {
+  id      Int     @id @default(autoincrement())
+  blogId  Int
+  blog    Blog    @relation(fields: [blogId], references: [id])
+  userId  Int
+  user    User    @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Blog {
+  id  Int    @id @default(autoincrement())
+  authorId   Int
+  content    String
+  title       String
+  published Boolean  @default(false)
+  author    User @relation(fields: [authorId], references: [id])
+  reports      Report[]
+  createdAt DateTime @default(now())
+  reportCount  Int      @default(0) // To track number of reports
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  recipientId Int      // User ID who receives the notification
+  message     String   // Notification message
+  read        Boolean  @default(false) // Whether the notification has been read
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  recipient   User     @relation(fields: [recipientId], references: [id])
+}
