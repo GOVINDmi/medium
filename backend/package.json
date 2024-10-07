@@ -5,7 +5,7 @@
   },
   "dependencies": {
     "@100xdevs/medium-common": "^1.0.0",
-    "@govindmishra/mediumpackage": "^1.0.0",
+    "@govindmishra/mediumpackage": "^1.0.1",
     "@prisma/client": "^5.10.2",
     "@prisma/extension-accelerate": "^0.6.3",
     "hono": "^4.0.8"
