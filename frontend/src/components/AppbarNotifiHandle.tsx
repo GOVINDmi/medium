@@ -3,11 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Avatar } from "./BlogCard";
 import { BACKEND_URL } from "../config";
 import axios from "axios";
-interface Notif {
-  id: number;
-  message: string;
-  read: boolean;
-}
+import { Notif } from "../hooks";
 
 export const AppbarNotifiHandle = ({ notifications,setNotifications }: { notifications: Notif[],setNotifications: React.Dispatch<React.SetStateAction<Notif[]>> }) => {
   const [isOpen, setIsOpen] = useState(false);  // Avatar menu

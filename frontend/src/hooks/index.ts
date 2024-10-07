@@ -15,10 +15,11 @@ export interface Blog {
     }
 }
 
-interface Notif{
+export interface Notif{
     id:number,
     message:string,
     read:boolean
+    createdAt:Date
 }
 
 interface Follow{

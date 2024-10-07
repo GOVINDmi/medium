@@ -6,12 +6,7 @@ import { AppbarNotifiHandle } from '../components/AppbarNotifiHandle';
 import { Spinner } from '../components/Spinner';
 import { BACKEND_URL } from "../config";
 import { useNotification } from '../hooks';
-interface Notif{
-    id:number,
-    message:string,
-    read:boolean
-}
-
+import { Notif } from '../hooks';
 const NotificationsPage = () => {
     const {loading,notifications,setNotifications } = useNotification();
   
@@ -28,12 +23,12 @@ const NotificationsPage = () => {
 //   }, []);
 
 const handleMarkAsRead = useCallback(
-    async (notificationId: number) => {
+    async (createdAt: Date) => {
       try {
         const token = localStorage.getItem("token"); // Ensure token is retrieved before use
   
         const response = await axios.patch(
-          `${BACKEND_URL}/api/v1/notifications/${notificationId}`,
+          `${BACKEND_URL}/api/v1/notifications/${createdAt}`,
           { read: true },
           {
             headers: {
@@ -45,7 +40,7 @@ const handleMarkAsRead = useCallback(
         if (response.status === 200) {
           setNotifications((prevNotifications) =>
             prevNotifications.map((notification) =>
-              notification.id === notificationId
+              notification.createdAt === createdAt
                 ? { ...notification, read: true }
                 : notification
             )
@@ -53,7 +48,7 @@ const handleMarkAsRead = useCallback(
           );
           
         } else {
-          console.error("Error marking notification as read:", response);
+          console.error("Error marking notification as read:", createdAt);
         }
       } catch (error) {
         console.error("Error marking notification as read:", error);
@@ -85,7 +80,7 @@ const handleMarkAsRead = useCallback(
             {notification.read ? (
                 <div>Notification has been read</ div>
                 ) : (
-                <button onClick={() => handleMarkAsRead(notification.id)}>
+                <button onClick={() => handleMarkAsRead(notification.createdAt)}>
                     Mark as read
                 </button>
             )}
