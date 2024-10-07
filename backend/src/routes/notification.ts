@@ -15,12 +15,10 @@ export const notificationRouter = new Hono<{
 
 notificationRouter.use("/*", async (c, next) => {
   const authHeader = c.req.header("authorization") || "";
-//   const authHeader = head.split(' ')[1];
   try {
     const user = await verify(authHeader, c.env.JWT_SECRET);
     if (user) {
       c.set("userId", user.id as string);
-     
       await next();
     } else {
       c.status(403);
@@ -42,12 +40,13 @@ notificationRouter.get("/", async (c) => {
 
   try {
     const notifications = await prisma.notification.findMany({
-      where: { recipientId:userId },
+      where: { recipientId: userId },
       orderBy: { createdAt: "desc" },
-      select:{
-        id:true,
-        message:true,
-        read:true
+      select: {
+        recipientId: true,  // Adjusted to match composite key
+        createdAt: true,    // Adjusted to match composite key
+        message: true,
+        read: true
       }
     });
 
@@ -58,97 +57,58 @@ notificationRouter.get("/", async (c) => {
   }
 });
 
+// Mark all notifications as read for the current user
+notificationRouter.patch("/all", async (c) => {
+  const userId = Number(c.get("userId"));
 
-notificationRouter.patch('/all', async (c) => {
-    const userId = Number(c.get("userId"));
-   
-    // const notificationId = c.req.param("authorId");
-    // console.log(notificationId);
-    const body  = await c.req.json();
-    console.log(body.read);
-  
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate());
-  
-    try {
-        const updatedNotification = await prisma.notification.updateMany({
-            where: {
-              recipientId: Number(userId),
-            },
-            data: {
-              read:true 
-            },
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
+
+  try {
+    const updatedNotifications = await prisma.notification.updateMany({
+      where: {
+        recipientId: userId
+      },
+      data: {
+        read: true
+      }
+    });
     
-      });
-      console.log(updatedNotification);
-      c.status(200);
-      return c.json({messae:"done"});
-    } catch (e) {
-      c.status(500);
-      return c.json({ message: "Error fetching notifications" ,userId:userId});
-    }
-  });
+    c.status(200);
+    return c.json({ message: "All notifications marked as read" });
+  } catch (e) {
+    c.status(500);
+    return c.json({ message: "Error marking all notifications as read", userId });
+  }
+});
 
-notificationRouter.patch('/:notificationId', async (c) => {
-    const userId = Number(c.get("userId"));
-   
-    const notificationId = c.req.param("notificationId");
-    console.log(notificationId);
-    const body  = await c.req.json();
-    console.log(body.read);
-  
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate());
-  
-    try {
-        const updatedNotification = await prisma.notification.update({
-            where: {
-              id: Number(notificationId),
-            },
-            data: {
-              read:true 
-            },
-    
-      });
-      console.log(updatedNotification);
-      c.status(200);
-      return c.json({messae:"done"});
-    } catch (e) {
-      c.status(500);
-      return c.json({ message: "Error fetching notifications" ,notificationId});
-    }
-  });
+// Mark a single notification as read based on recipientId and createdAt
+notificationRouter.patch("/:createdAt", async (c) => {
+  const userId = Number(c.get("userId"));
+  const createdAt = c.req.param("createdAt");
 
+  const prisma = new PrismaClient({
+    datasourceUrl: c.env.DATABASE_URL,
+  }).$extends(withAccelerate());
 
-  notificationRouter.patch('/all', async (c) => {
-    const userId = Number(c.get("userId"));
-   
-    // const notificationId = c.req.param("authorId");
-    // console.log(notificationId);
-    const body  = await c.req.json();
-    console.log(body.read);
-  
-    const prisma = new PrismaClient({
-      datasourceUrl: c.env.DATABASE_URL,
-    }).$extends(withAccelerate());
-  
-    try {
-        const updatedNotification = await prisma.notification.updateMany({
-            where: {
-              recipientId: Number(userId),
-            },
-            data: {
-              read:true 
-            },
-    
-      });
-      console.log(updatedNotification);
-      c.status(200);
-      return c.json({messae:"done"});
-    } catch (e) {
-      c.status(500);
-      return c.json({ message: "Error fetching notifications" ,userId:userId});
-    }
-  });
+  try {
+    const updatedNotification = await prisma.notification.update({
+      where: {
+        recipientId_createdAt: {
+          recipientId: userId,
+          createdAt: new Date(createdAt) // Ensure it's converted to Date
+        }
+      },
+      data: {
+        read: true
+      }
+    });
+
+    c.status(200);
+    return c.json({ message: "Notification marked as read" });
+  } catch (e) {
+    c.status(500);
+    return c.json({ message: "Error marking notification as read", createdAt });
+  }
+});

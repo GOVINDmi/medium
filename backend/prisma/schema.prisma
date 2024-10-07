@@ -21,7 +21,7 @@ model User {
 }
 
 model Blog {
-  id          String   @id @default(uuid())  // Use UUID for consistent unique IDs
+  id          String   @id @default(uuid())  
   authorId    Int
   content     String
   title       String
@@ -29,42 +29,35 @@ model Blog {
   author      User     @relation(fields: [authorId], references: [id])
   reports     Report[]
   createdAt   DateTime @default(now())
-  reportCount Int      @default(0)           // To track number of reports
+  reportCount Int      @default(0)          
 }
 
 
 model Follow {
   followerId  Int
   followingId Int
-  
   follower  User   @relation("userFollowing", fields: [followerId], references: [id], onDelete: Cascade)
   following User   @relation("userFollowers", fields: [followingId], references: [id], onDelete: Cascade)
-  
   createdAt DateTime @default(now())
-
   @@id([followerId, followingId])  // Composite primary key
 }
 
 
 model Report {
-  blogId    String   // Blog ID now references UUID type in Blog model
+  blogId    String  
   blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
   userId    Int
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-
   @@id([blogId, userId]) // Composite primary key
 }
 
 
-
 model Notification {
-  id          Int      @id @default(autoincrement())
   recipientId Int      // User ID who receives the notification
   message     String   // Notification message
   read        Boolean  @default(false) // Whether the notification has been read
-  createdAt   DateTime @default(now())
-  
-  // Relations
+  createdAt   DateTime @default(now()) // Timestamp for when the notification was created
   recipient   User     @relation(fields: [recipientId], references: [id])
+  @@id([recipientId, createdAt]) // Composite key combining recipientId and createdAt
 }
