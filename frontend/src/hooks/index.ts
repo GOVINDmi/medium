@@ -9,6 +9,7 @@ export interface Blog {
     "title": string;
     "id": string;
     "authorId":number
+    "createdAt":Date,
     "author": {
         "name": string;
         "id": number

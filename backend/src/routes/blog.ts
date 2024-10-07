@@ -129,6 +129,7 @@ blogRouter.get('/bulk', async (c) => {
       title: true,
       content: true,
       authorId: true,
+      createdAt:true,
       author: { select: { name: true, id: true } },
     },
   });
@@ -148,6 +149,7 @@ blogRouter.get('/myblog', async (c) => {
         title: true,
         content: true,
         authorId: true,
+        createdAt:true,
         author: { select: { name: true } },
       },
     });
@@ -172,6 +174,7 @@ blogRouter.get("/profile/:id", async (c) => {
         title: true,
         content: true,
         authorId: true,
+        createdAt:true,
         author: { select: { name: true } },
       },
     });
@@ -196,6 +199,7 @@ blogRouter.get('/:id', async (c) => {
         title: true,
         content: true,
         authorId: true,
+        createdAt:true,
         author: { select: { name: true } },
       },
     });

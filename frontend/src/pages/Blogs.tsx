@@ -154,7 +154,12 @@ export const Blogs = () => {
               title={blog.title}
               content={blog.content}
               authorId={blog.authorId}
-              publishedDate={"2nd Feb 2024"}
+              publishedDate={new Date(blog.createdAt).toLocaleString("en-US", {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            })}
+            
             />
           ))}
         </div>

@@ -141,7 +141,11 @@ export const ProfilePage = () => {
                                 title={blog.title}
                                 authorId={blog.authorId}
                                 content={blog.content}
-                                publishedDate={"2nd Feb 2024"} // This should be dynamic in a real scenario
+                                publishedDate={new Date(blog.createdAt).toLocaleString("en-US", {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric',
+                                })}
                             />
                         ))}
                     </div>
