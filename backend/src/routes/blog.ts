@@ -55,7 +55,7 @@ blogRouter.post("/", async (c) => {
   // Get all followers of the author
   const followers = await prisma.follow.findMany({
     where: { followingId: authorId },
-    select: { followerId: true }, // Get users who are following this author
+    select: { followerId: true },
   });
 
   // Create notifications for all followers
@@ -122,7 +122,7 @@ blogRouter.get('/bulk', async (c) => {
   const blogs = await prisma.blog.findMany({
     where: {
       authorId: { not: userId },
-      reports: { none: { userId } }, // Exclude blogs reported by the current user
+      reports: { none: { userId } },
     },
     select: {
       id: true,
@@ -161,12 +161,12 @@ blogRouter.get('/myblog', async (c) => {
 
 // Fetch blogs by a specific author
 blogRouter.get("/profile/:id", async (c) => {
-  const id = c.req.param("id");
+  const id = Number(c.req.param("id"));
   const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
 
   try {
     const blogs = await prisma.blog.findMany({
-      where: { authorId: Number(id) },
+      where: { authorId: id },
       select: {
         id: true,
         title: true,
@@ -190,7 +190,7 @@ blogRouter.get('/:id', async (c) => {
 
   try {
     const blog = await prisma.blog.findFirst({
-      where: { id: Number(id) },
+      where: { id },
       select: {
         id: true,
         title: true,

@@ -10,7 +10,7 @@ interface Notif {
   read: boolean;
 }
 
-export const AppbarReport = ({blogId}:{blogId : number}) => {
+export const AppbarReport = ({blogId}:{blogId : string}) => {
   const [isOpen, setIsOpen] = useState(false);  // Avatar menu
   const [isNotifOpen, setIsNotifOpen] = useState(false);  // Three-dot menu
   const {notifications } = useNotification();

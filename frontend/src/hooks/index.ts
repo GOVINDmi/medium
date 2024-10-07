@@ -7,7 +7,7 @@ import { getNotifications } from "../getNotification";
 export interface Blog {
     "content": string;
     "title": string;
-    "id": number;
+    "id": string;
     "authorId":number
     "author": {
         "name": string;

@@ -36,7 +36,7 @@ reportRouter.use("/*", async (c, next) => {
 // Route to report a blog
 reportRouter.post("/:blogId", async (c) => {
   const loggedInUserId = Number(c.get("userId")); // ID of the user reporting the blog
-  const blogId = Number(c.req.param("blogId")); // ID of the blog being reported
+  const blogId = c.req.param("blogId"); // ID of the blog being reported
 
   const prisma = new PrismaClient({
     datasourceUrl: c.env.DATABASE_URL,
@@ -85,13 +85,11 @@ reportRouter.post("/:blogId", async (c) => {
       },
     });
 
-    console.log(updatedBlog.reportCount);
-
     // If reportCount reaches 2, delete the blog
     if (updatedBlog.reportCount >= 2) {
       // Delete the reports associated with the blog
       await prisma.report.deleteMany({
-        where: { blogId: blogId },
+        where: { blogId },
       });
 
       // Delete the blog

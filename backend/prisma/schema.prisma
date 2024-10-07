@@ -20,6 +20,19 @@ model User {
   reports Report[]
 }
 
+model Blog {
+  id          String   @id @default(uuid())  // Use UUID for consistent unique IDs
+  authorId    Int
+  content     String
+  title       String
+  published   Boolean  @default(false)
+  author      User     @relation(fields: [authorId], references: [id])
+  reports     Report[]
+  createdAt   DateTime @default(now())
+  reportCount Int      @default(0)           // To track number of reports
+}
+
+
 model Follow {
   followerId  Int
   followingId Int
@@ -34,25 +47,16 @@ model Follow {
 
 
 model Report {
-  id      Int     @id @default(autoincrement())
-  blogId  Int
-  blog    Blog    @relation(fields: [blogId], references: [id])
-  userId  Int
-  user    User    @relation(fields: [userId], references: [id])
+  blogId    String   // Blog ID now references UUID type in Blog model
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+
+  @@id([blogId, userId]) // Composite primary key
 }
 
-model Blog {
-  id  Int    @id @default(autoincrement())
-  authorId   Int
-  content    String
-  title       String
-  published Boolean  @default(false)
-  author    User @relation(fields: [authorId], references: [id])
-  reports      Report[]
-  createdAt DateTime @default(now())
-  reportCount  Int      @default(0) // To track number of reports
-}
+
 
 model Notification {
   id          Int      @id @default(autoincrement())
