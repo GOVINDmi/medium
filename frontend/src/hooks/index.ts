@@ -153,115 +153,123 @@ export const useNotification = () => {
 
 
 export const useFollowing = () => {
-   
-    const [following, setFollowing] = useState<Number[]>([]);
+    const [following, setFollowing] = useState<number[]>([]);
+  
     useEffect(() => {
-        const fetchFollowing = async () => {
-          try {
-            const token = localStorage.getItem("token");
-      
-            if (!token) {
-              console.error("No token found");
-              return;
-            }
-      
-            const response = await axios.get(`${BACKEND_URL}/api/v1/followers/following`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-            const followingAuthors = response.data.response.map((author:Follow) => author.followingId);
-            //console.log(followingAuthors);
-             setFollowing(followingAuthors);
-            // console.log(response.data.response);
-            //setFollowing(response.data.response);
-          } catch (error) {
-            console.error("Failed to fetch following list", error);
+      const fetchFollowing = async () => {
+        try {
+          const token = localStorage.getItem("token");
+  
+          if (!token) {
+            console.error("No token found");
+            return;
           }
-        };
-      
-        fetchFollowing();
-      }, []);
-    return{
-      following
-    }
-}
-
-
-export const useProfile = ({id} : {id:string | undefined}) => {
-    const [profileData, setProfileData] = useState<ProfileData>({
-        name: "",
-        followers: 0,
-        following: 0,
-        isFollowing: false
-    });
-    const [loading1, setLoading1] = useState(true); // Indicates whether profile data is still loading
-    const [rerender, setRerender] = useState(false);
-    useEffect(() => {
-        async function fetchProfileData() {
-            try {
-                const response = await axios.get(`${BACKEND_URL}/api/v1/profile/${id}`, {
-                    headers: {
-                        Authorization: localStorage.getItem("token")
-                    },
-                });
-                setProfileData(response.data);
-                setLoading1(false);
-            } catch (error) {
-                console.error("Error fetching profile data", error);
-                setLoading1(false);
-            }
+  
+          const response = await axios.get(`${BACKEND_URL}/api/v1/followers/following`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+  
+          // Use the updated response format for fetching the following list
+          const followingAuthors = response.data.followers.map((follow: Follow) => follow.followingId);
+          setFollowing(followingAuthors);
+  
+        } catch (error) {
+          console.error("Failed to fetch following list", error);
         }
+      };
+  
+      fetchFollowing();
+    }, []);
+  
+    return {
+      following,
+    };
+  };
+  
 
-        fetchProfileData();
+
+  export const useProfile = ({ id }: { id: string | undefined }) => {
+    const [profileData, setProfileData] = useState<ProfileData>({
+      name: "",
+      followers: 0,
+      following: 0,
+      isFollowing: false,
+    });
+    const [loading1, setLoading1] = useState(true);
+    const [rerender, setRerender] = useState(false);
+  
+    useEffect(() => {
+      async function fetchProfileData() {
+        try {
+          const response = await axios.get(`${BACKEND_URL}/api/v1/profile/${id}`, {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
+          });
+  
+          // Updated structure based on new schema
+          const { name, followers, following, isFollowing } = response.data;
+          setProfileData({ name, followers, following, isFollowing });
+          setLoading1(false);
+        } catch (error) {
+          console.error("Error fetching profile data", error);
+          setLoading1(false);
+        }
+      }
+  
+      fetchProfileData();
     }, [rerender, id]);
-
+  
     return {
-        profileData,
-        loading1,
-        setLoading1,
-        rerender,
-        setRerender
-    }
-
-}
-
-
-export const useMyProfile = () => {
+      profileData,
+      loading1,
+      setLoading1,
+      rerender,
+      setRerender,
+    };
+  };
+  
+  export const useMyProfile = () => {
     const [profileData, setProfileData] = useState<ProfileData>({
-        name: "",
-        followers: 0,
-        following: 0,
-        isFollowing: false
+      name: "",
+      followers: 0,
+      following: 0,
+      isFollowing: false,
     });
-    const [loading1, setLoading1] = useState(true); // Indicates whether profile data is still loading
+    const [loading1, setLoading1] = useState(true);
     const [rerender, setRerender] = useState(false);
+  
     useEffect(() => {
-        async function fetchProfileData() {
-            try {
-                const response = await axios.get(`${BACKEND_URL}/api/v1/profile/myprofile`, {
-                    headers: {
-                        Authorization: localStorage.getItem("token")
-                    },
-                });
-                setProfileData(response.data);
-                setLoading1(false);
-            } catch (error) {
-                console.error("Error fetching profile data", error);
-                setLoading1(false);
-            }
+      async function fetchProfileData() {
+        try {
+          const response = await axios.get(`${BACKEND_URL}/api/v1/profile/myprofile`, {
+            headers: {
+              Authorization: localStorage.getItem("token"),
+            },
+          });
+  
+          // Updated structure for the logged-in user profile
+          const { name, followers, following } = response.data;
+          setProfileData({ name, followers, following, isFollowing: false }); // isFollowing is false for own profile
+          setLoading1(false);
+        } catch (error) {
+          console.error("Error fetching profile data", error);
+          setLoading1(false);
         }
-
-        fetchProfileData();
+      }
+  
+      fetchProfileData();
     }, [rerender]);
-
+  
     return {
-        profileData,
-        loading1,
-        setLoading1,
-        rerender,
-        setRerender
-    }
-
-}
+      profileData,
+      loading1,
+      setLoading1,
+      rerender,
+      setRerender,
+    };
+  };
+  
   

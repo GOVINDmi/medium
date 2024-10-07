@@ -33,11 +33,12 @@ userRouter.post('/signup', async (c) => {
           name: body.name
         }
       })
+      const author = user.name || "Anonymous User";
       const jwt = await sign({
         id: user.id
       }, c.env.JWT_SECRET);
   
-      return c.text(jwt)
+      return c.json({jwt,author});
     } catch(e) {
       console.log(e);
       c.status(411);

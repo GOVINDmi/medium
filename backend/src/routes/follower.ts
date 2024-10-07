@@ -3,8 +3,6 @@ import { withAccelerate } from "@prisma/extension-accelerate";
 import { Context, Hono } from "hono";
 import { verify } from "hono/jwt";
 
-
-
 export const followerRouter = new Hono<{
     Bindings: {
         DATABASE_URL: string;
@@ -15,32 +13,27 @@ export const followerRouter = new Hono<{
     }
 }>();
 
+// Middleware for user authentication and setting userId
 followerRouter.use("/*", async (c, next) => {
     const head = c.req.header("authorization") || ""; 
     const authHeader = head.split(' ')[1];
-    
+
     try {
         const user = await verify(authHeader, c.env.JWT_SECRET);
-       
         if (user) {
             c.set("userId", user.id as string);
             await next();
         } else {
             c.status(403);
-            return c.json({
-                message: "You are not present in"
-            });
+            return c.json({ message: "You are not authenticated" });
         }
     } catch(e) {
         c.status(403);
-        return c.json({
-            message: "You are not logged in",
-            authHeader
-        });
+        return c.json({ message: "You are not logged in", authHeader });
     }
 });
 
-
+// Route for fetching users the current user is following
 followerRouter.get("/following", async (c) => {
     const id = Number(c.get("userId"));
 
@@ -49,127 +42,104 @@ followerRouter.get("/following", async (c) => {
     }).$extends(withAccelerate());
 
     const response = await prisma.follow.findMany({
-        where:{
-            followerId:id
+        where: {
+            followerId: id
         },
-        select:{
-            id:true,
-            followerId:true,
-            followingId:true
+        select: {
+            followingId: true,  // Select the IDs of users being followed
+            followerId: true
         }
-    })
-    if(response)
-    {
+    });
+
+    if (response) {
         c.status(200);
-        return c.json({
-            response
-        })
-    }
-    else
-    {
+        return c.json({ response });
+    } else {
         c.status(500);
-        return c.json({
-            message:"error "
-        })
+        return c.json({ message: "Error fetching follow data" });
     }
-   
 });
 
-
+// Route for following a user
 followerRouter.post("/follow/:followingId", async (c) => {
-    const followingId = c.req.param("followingId");
-    const followerId = Number(c.get("userId"));  // Assuming the user is authenticated
+    const followingId = Number(c.req.param("followingId"));
+    const followerId = Number(c.get("userId"));
 
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate());
 
     try {
-        // Create follow entry in the database
         const follow = await prisma.follow.create({
             data: {
                 followerId,
-                followingId: Number(followingId),
-            },
+                followingId,
+            }
         });
 
-        // Create a notification for the user being followed
+        // Notify the followed user
         const followedUser = await prisma.user.findUnique({
-            where: { id: Number(followingId) },
-            select: { name: true },
+            where: { id: followingId },
+            select: { name: true }
         });
 
         if (followedUser) {
             const message = `You have a new follower: ${followerId}`;
-         
-            try {
-                await prisma.notification.create({
-                    data: {
-                        recipientId:Number(followingId),
-                        message,
-                        read: false, // default to unread
-                    },
-                });
-            } catch (error) {
-                console.log("Error creating notification:", error);
-            }
+            await prisma.notification.create({
+                data: {
+                    recipientId: followingId,
+                    message,
+                    read: false
+                }
+            });
         }
 
         c.status(200);
         return c.json({ message: "Now following this user", follow });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         c.status(500);
         return c.json({ error: "Error following user" });
     }
 });
 
-
-
-
-// Unfollow route
+// Route for unfollowing a user
 followerRouter.delete("/unfollow/:followingId", async (c) => {
-    const followingId = c.req.param("followingId");
-    const followerId = Number(c.get("userId"));  // Assuming the user is authenticated
+    const followingId = Number(c.req.param("followingId"));
+    const followerId = Number(c.get("userId"));
 
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate());
 
     try {
-        // Delete follow entry from the database
         await prisma.follow.deleteMany({
             where: {
-                followerId: followerId,
-                followingId: Number(followingId),
-            },
+                followerId,
+                followingId,
+            }
         });
 
-        // Optionally: Create a notification for the user being unfollowed
         const unfollowedUser = await prisma.user.findUnique({
-            where: { id: Number(followingId) },
-            select: { name: true },
+            where: { id: followingId },
+            select: { name: true }
         });
 
         if (unfollowedUser) {
             const message = `You have been unfollowed by: ${followerId}`;
-            try {
-                await prisma.notification.create({
-                    data: {
-                        recipientId:Number(followingId),
-                        message,
-                        read: false, // default to unread
-                    },
-                });
-            } catch (error) {
-                console.log("Error creating notification:", error);
-            }
+            await prisma.notification.create({
+                data: {
+                    recipientId: followingId,
+                    message,
+                    read: false
+                }
+            });
         }
 
         c.status(200);
         return c.json({ message: "Unfollowed the user" });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         c.status(500);
         return c.json({ error: "Error unfollowing user" });
     }
