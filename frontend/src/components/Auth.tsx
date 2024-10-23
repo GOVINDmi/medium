@@ -9,8 +9,29 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
     const [postInputs, setPostInputs] = useState<SignupInput>({
         name: "",
         username: "",
-        password: ""
+        password: "",
+        token:""
     });
+    // useEffect(() => {
+
+    //     const getToken = async() =>{
+    //         Notification.requestPermission().then(async (permission) => {
+    //             if (permission === 'granted') {
+    //               const token =  await requestFirebaseToken(vapidKey);
+    //               if(token)
+    //               {
+    //                 setPostInputs({...postInputs,token})
+
+    //               }
+    //             } else {
+    //               console.log('Notification permission denied.');
+    //             }
+    //           });
+
+    //     }
+    //     getToken()
+        
+    //   }, []);
 
     async function sendRequest() {
         try {
@@ -18,7 +39,7 @@ export const Auth = ({ type }: { type: "signup" | "signin" }) => {
             const response = await axios.post(`${BACKEND_URL}/api/v1/user/${type === "signup" ? "signup" : "signin"}`, postInputs);
         
             
-            const jwt = response.data.jwt;
+            const jwt = response.data.token;
             const author = response.data.author;
             localStorage.setItem("token", jwt);
             localStorage.setItem("author",author);

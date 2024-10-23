@@ -5,18 +5,22 @@ import { verify } from "hono/jwt";
 
 export const notificationRouter = new Hono<{
   Bindings: {
-    DATABASE_URL: string;
-    JWT_SECRET: string;
-  },
+      DATABASE_URL: string;
+      PUBLIC_KEY: string;
+      PRIVATE_KEY: string;
+      URL:string;
+  }, 
   Variables: {
-    userId: string;
+      userId: string;
+      token:string
   }
 }>();
+
 
 notificationRouter.use("/*", async (c, next) => {
   const authHeader = c.req.header("authorization") || "";
   try {
-    const user = await verify(authHeader, c.env.JWT_SECRET);
+    const user = await verify(authHeader, c.env.PUBLIC_KEY,"RS256");
     if (user) {
       c.set("userId", user.id as string);
       await next();
@@ -31,7 +35,8 @@ notificationRouter.use("/*", async (c, next) => {
 });
 
 // Get notifications for the current user
-notificationRouter.get("/", async (c) => {
+notificationRouter.get("/:token", async (c) => {
+  const token = c.req.param("token");
   const userId = Number(c.get("userId"));
 
   const prisma = new PrismaClient({
@@ -48,6 +53,14 @@ notificationRouter.get("/", async (c) => {
         message: true,
         read: true
       }
+    });
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        fcmtoken: token,
+      },
     });
 
     return c.json({ notifications });

@@ -6,6 +6,7 @@ import { notificationRouter } from "./routes/notification"; // Import notificati
 import { cors } from "hono/cors";
 import { profileRouter } from "./routes/profile";
 import { reportRouter } from "./routes/report";
+//import {fire} from "./routes/firebase"
 
 const app = new Hono<{
   Bindings: {
@@ -21,6 +22,7 @@ app.route("/api/v1/followers", followerRouter);
 app.route("/api/v1/report" , reportRouter);
 app.route("/api/v1/notifications", notificationRouter); // Add notification route
 app.route("/api/v1/profile" , profileRouter);
+//app.route("/api/v1",fire);
 
 
 export default app;

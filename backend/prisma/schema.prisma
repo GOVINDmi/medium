@@ -13,11 +13,13 @@ model User {
   name    String? @default("Anonymous User")
   username String @unique
   password String
+  fcmtoken String @default("NULL")
   blogs    Blog[]
   followers Follow[] @relation("userFollowers")
   following Follow[] @relation("userFollowing")
   notifications Notification[]
   reports Report[]
+  comments    Comment[] // Relation to comments
 }
 
 model Blog {
@@ -29,7 +31,9 @@ model Blog {
   author      User     @relation(fields: [authorId], references: [id])
   reports     Report[]
   createdAt   DateTime @default(now())
-  reportCount Int      @default(0)          
+  reportCount Int      @default(0)  
+  likes       Int      @default(0) // Track likes
+  comments    Comment[] // Relation to comments
 }
 
 
@@ -61,3 +65,16 @@ model Notification {
   recipient   User     @relation(fields: [recipientId], references: [id])
   @@id([recipientId, createdAt]) // Composite key combining recipientId and createdAt
 }
+
+
+model Comment {
+  blogId    String
+  blog      Blog     @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  content   String
+  createdAt DateTime @default(now())
+
+  @@id([blogId, createdAt])  // Composite primary key
+}
+

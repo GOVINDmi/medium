@@ -7,11 +7,14 @@ export const reportRouter = new Hono<{
   Bindings: {
     DATABASE_URL: string;
     JWT_SECRET: string;
-  },
+    PUBLIC_KEY: string;
+    PRIVATE_KEY: string;
+}, 
   Variables: {
     userId: string;
   }
 }>();
+
 
 // Middleware to verify JWT and extract user ID
 reportRouter.use("/*", async (c, next) => {
@@ -19,7 +22,7 @@ reportRouter.use("/*", async (c, next) => {
   const authHeader = head.split(' ')[1];
   
   try {
-    const user = await verify(authHeader, c.env.JWT_SECRET);
+    const user = await verify(authHeader, c.env.PUBLIC_KEY,"RS256");
     if (user) {
       c.set("userId", user.id as string); // Set userId in the context
       await next();

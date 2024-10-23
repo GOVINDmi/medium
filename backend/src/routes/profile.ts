@@ -7,16 +7,19 @@ export const profileRouter = new Hono<{
   Bindings: {
     DATABASE_URL: string;
     JWT_SECRET: string;
-  },
+    PUBLIC_KEY: string;
+    PRIVATE_KEY: string;
+}, 
   Variables: {
     userId: string;
   }
 }>();
 
+
 profileRouter.use("/*", async (c, next) => {
   const authHeader = c.req.header("authorization") || "";
   try {
-    const user = await verify(authHeader, c.env.JWT_SECRET);
+    const user = await verify(authHeader,c.env.PUBLIC_KEY,"RS256");
     if (user) {
       c.set("userId", user.id as string);
       await next();

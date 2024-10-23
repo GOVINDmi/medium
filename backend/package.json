@@ -5,13 +5,20 @@
   },
   "dependencies": {
     "@100xdevs/medium-common": "^1.0.0",
-    "@govindmishra/mediumpackage": "^1.0.1",
+    "@govindmishra/mediumpackage": "^1.0.2",
     "@prisma/client": "^5.10.2",
     "@prisma/extension-accelerate": "^0.6.3",
-    "hono": "^4.0.8"
+    "axios": "^1.7.7",
+    "bcrypt": "^5.1.1",
+    "firebase-admin": "^12.6.0",
+    "google-auth-library": "^9.14.2",
+    "googleapis": "^144.0.0",
+    "hono": "^4.0.8",
+    "jsonwebtoken": "^9.0.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240208.0",
+    "@types/bcrypt": "^5.0.2",
     "prisma": "^5.20.0",
     "wrangler": "^3.25.0"
   }

@@ -2,16 +2,22 @@ import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Context, Hono } from "hono";
 import { verify } from "hono/jwt";
-
+import { getAccessToken } from "./firebase";
+import axios from "axios"
 export const followerRouter = new Hono<{
     Bindings: {
         DATABASE_URL: string;
-        JWT_SECRET: string;
+        PUBLIC_KEY: string;
+        PRIVATE_KEY: string;
+        URL:string;
     }, 
     Variables: {
         userId: string;
+        token:string
     }
 }>();
+
+
 
 // Middleware for user authentication and setting userId
 followerRouter.use("/*", async (c, next) => {
@@ -19,9 +25,10 @@ followerRouter.use("/*", async (c, next) => {
     const authHeader = head.split(' ')[1];
 
     try {
-        const user = await verify(authHeader, c.env.JWT_SECRET);
+        const user = await verify(authHeader,c.env.PUBLIC_KEY,"RS256");
         if (user) {
             c.set("userId", user.id as string);
+            c.set("token",authHeader);
             await next();
         } else {
             c.status(403);
@@ -82,6 +89,47 @@ followerRouter.post("/follow/:followingId", async (c) => {
             where: { id: followingId },
             select: { name: true }
         });
+        const fcm = await prisma.user.findUnique({
+            where:{
+                id:followingId,
+            },
+            select:{
+                fcmtoken:true
+            }
+        });
+        
+        const jwt = c.get("token");
+        console.log(jwt);
+        const accessToken = await getAccessToken(jwt);
+        if(fcm)
+        {
+            const payload = {
+                message: {
+                  token:fcm.fcmtoken,
+                  notification: {
+                    title: "New Follower",
+                    body: `You have a new follower: ${followerId}`,
+                  },
+                },
+              };
+              try {
+       
+                const response = await axios.post(
+                  c.env.URL,
+                  payload,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                  }
+                );
+                console.log(2);
+                //return (response.data);
+              } catch (error) {
+                console.error("Error sending FCM message:", error);
+              }
+
+        }
 
         if (followedUser) {
             const message = `You have a new follower: ${followerId}`;
@@ -124,6 +172,49 @@ followerRouter.delete("/unfollow/:followingId", async (c) => {
             where: { id: followingId },
             select: { name: true }
         });
+
+        const fcm = await prisma.user.findUnique({
+            where:{
+                id:followingId,
+            },
+            select:{
+                fcmtoken:true
+            }
+        });
+        
+        const jwt = c.get("token");
+        console.log(jwt);
+        const accessToken = await getAccessToken(jwt);
+        if(fcm)
+        {
+            const payload = {
+                message: {
+                  token:fcm.fcmtoken,
+                  notification: {
+                    title: "Person Unfollow",
+                    body: `You have been unfollowed by: ${followerId}`,
+                  },
+                },
+              };
+              try {
+       
+                const response = await axios.post(
+                  c.env.URL,
+                  payload,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${accessToken}`,
+                    },
+                  }
+                );
+                console.log(2);
+                //return (response.data);
+              } catch (error) {
+                console.error("Error sending FCM message:", error);
+              }
+
+        }
+
 
         if (unfollowedUser) {
             const message = `You have been unfollowed by: ${followerId}`;

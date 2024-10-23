@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Avatar } from "./BlogCard";
-
 import { useNotification } from "../hooks";
+import { requestFirebaseToken } from '../firebase';
+
+const vapidKey = 'BElxWcZZE_DrCX4rmoRbMuY2FUyj-0nPv62rB_rEgUGtlqNk6VA-VtX6gvNTmCskg2z6z-cX8_1pgrOqeewrAA0';
 
 interface Notif{
     id:number,
@@ -15,6 +17,7 @@ export const AppbarNotification = () => {
   const [isOpen, setIsOpen] = useState(false);
 //   const [notifications, setNotifications] = useState([]);
   const navigate = useNavigate();
+ 
 
   const handleLogout = () => {
     localStorage.removeItem("author");

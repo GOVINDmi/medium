@@ -10,7 +10,10 @@ import {ProfilePage} from "./pages/Profile";
 import { MyProfileBlog } from './pages/MyProfileBlog';
 import  Update  from './pages/Update';
 
+
 function App() {
+
+
 
   return (
     <>

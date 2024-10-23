@@ -12,3 +12,6 @@ bun.lockb
 
 wrangler.toml
 .env
+
+medium-413fd-firebase-adminsdk-akkw3-a95c0dbb9e.json
+firebase-admin.ts

@@ -3,47 +3,74 @@ import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Hono } from "hono";
 import { verify } from "hono/jwt";
+import axios from "axios"
+// import { getAccessToken } from "./firebase";
+import { getAccessToken } from "./firebase";
 
+
+
+
+
+
+
+ 
 export const blogRouter = new Hono<{
     Bindings: {
         DATABASE_URL: string;
-        JWT_SECRET: string;
+        PUBLIC_KEY: string;
+        PRIVATE_KEY: string;
+        URL:string;
     }, 
     Variables: {
         userId: string;
+        token:string
     }
 }>();
 
 blogRouter.use("/*", async (c, next) => {
-    const authHeader = c.req.header("authorization") || "";
-    try {
-        const user = await verify(authHeader, c.env.JWT_SECRET);
-        if (user) {
-            c.set("userId", user.id as string);
-            await next();
-        } else {
-            c.status(403);
-            return c.json({ message: "You are not logged in" });
-        }
-    } catch(e) {
-        c.status(403);
-        return c.json({ message: "You are not logged in" });
+
+    const authHeader = c.req.header("authorization") ;
+    if(authHeader){
+            try {
+
+              const user = await verify(authHeader, c.env.PUBLIC_KEY, 'RS256'); 
+            // console.log(user);
+              if (user) {
+                c.set("userId", user.id as string);
+                c.set("token",authHeader);
+                await next();
+              
+               
+                
+              } else {
+                  c.status(403);
+                  return c.json({ message: "You are not logged in" });
+              }
+          } catch(e) {
+              c.status(403);
+              return c.json({ message: "You are not logged in" });
+          }
+
     }
+   // console.log(authHeader)
+  
 });
 
-// Create a new blog and notify followers
-blogRouter.post("/", async (c) => {
+
+
+
+blogRouter.post('/', async (c) => {
   const body = await c.req.json();
   const { success } = createBlogInput.safeParse(body);
   if (!success) {
     c.status(411);
-    return c.json({ message: "Inputs not correct" });
+    return c.json({ message: 'Inputs not correct' });
   }
 
-  const authorId = Number(c.get("userId"));
+  const authorId = Number(c.get('userId'));
   const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
 
-  // Create the blog
+  // Step 1: Create the blog
   const blog = await prisma.blog.create({
     data: {
       title: body.title,
@@ -52,13 +79,59 @@ blogRouter.post("/", async (c) => {
     },
   });
 
-  // Get all followers of the author
+  // Step 2: Save FCM token of the author
+  
+
+  // Step 3: Fetch followers with FCM tokens
   const followers = await prisma.follow.findMany({
     where: { followingId: authorId },
-    select: { followerId: true },
+    select: { follower: { select: { fcmtoken: true } }, followerId: true },
   });
 
-  // Create notifications for all followers
+
+  const jwt = c.get("token");
+  console.log(jwt);
+  const accessToken = await getAccessToken(jwt);
+  const fcmTokens = followers
+    .map((follower) => follower.follower.fcmtoken)
+    .filter((token) => token);
+
+  // Step 5: Send notifications
+  if (fcmTokens.length > 0) {
+    //console.log(fcmTokens[0])
+    fcmTokens.forEach(async (token)=>{
+      const payload = {
+        message: {
+          token:token,
+          notification: {
+            title: "New Blog Post",
+            body: "A new blog post has been published!",
+          },
+        },
+      };
+    
+ 
+       console.log(accessToken);
+      try {
+       
+        const response = await axios.post(
+          c.env.URL,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+     
+        //return (response.data);
+      } catch (error) {
+        console.error("Error sending FCM message:", error);
+      }
+    })
+  }
+
+  // Step 6: Optionally store notifications in your database
   const notifications = followers.map((follower) => ({
     message: `New blog post published: ${body.title}`,
     recipientId: follower.followerId,
@@ -133,6 +206,7 @@ blogRouter.get('/bulk', async (c) => {
       author: { select: { name: true, id: true } },
     },
   });
+ 
 
   return c.json({ blogs });
 });

@@ -12,15 +12,18 @@ export const MyProfileFullBlog = ({ blog }: {blog: Blog}) => {
                         {blog.title}
                     </div>
                     <div className="text-slate-500 pt-2">
-                    {new Date(blog.createdAt).toLocaleString("en-US", {
+                        {new Date(blog.createdAt).toLocaleString("en-US", {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
-                        
-                    })}
+                        })}
                     </div>
                     <div className="pt-4">
-                        {blog.content}
+                        {/* Render blog content as HTML */}
+                        <div 
+                          className="prose" // optional for styled content
+                          dangerouslySetInnerHTML={{ __html: blog.content }}
+                        />
                     </div>
                 </div>
                 <div className="col-span-4">

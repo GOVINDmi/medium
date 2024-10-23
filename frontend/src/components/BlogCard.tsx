@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 
+
 interface BlogCardProps {
     authorName: string;
     title: string;
@@ -22,6 +23,9 @@ export const BlogCard = ({
    
    
 }: BlogCardProps) => {
+    
+           
+    
    
     return <Link to={`/blog/${id}`}>
      

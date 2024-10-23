@@ -8,11 +8,13 @@ const zod_1 = __importDefault(require("zod"));
 exports.signupInput = zod_1.default.object({
     username: zod_1.default.string().email(),
     password: zod_1.default.string().min(6),
-    name: zod_1.default.string().optional()
+    name: zod_1.default.string().optional(),
+    token: zod_1.default.string()
 });
 exports.signinInput = zod_1.default.object({
     username: zod_1.default.string().email(),
     password: zod_1.default.string().min(6),
+    token: zod_1.default.string()
 });
 exports.createBlogInput = zod_1.default.object({
     title: zod_1.default.string(),
