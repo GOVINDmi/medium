@@ -2,7 +2,7 @@ import axios from "axios";
 import { BACKEND_URL } from "./config";
 import { requestFirebaseToken } from './firebase';
 
-const vapidKey = 'BElxWcZZE_DrCX4rmoRbMuY2FUyj-0nPv62rB_rEgUGtlqNk6VA-VtX6gvNTmCskg2z6z-cX8_1pgrOqeewrAA0';
+const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 
 // Fetch notifications from the backend
 export const getNotifications = async () => {
