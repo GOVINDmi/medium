@@ -30,6 +30,7 @@ export const blogRouter = new Hono<{
 blogRouter.use("/*", async (c, next) => {
 
     const authHeader = c.req.header("authorization") ;
+    console.log(authHeader);
     if(authHeader){
             try {
 
@@ -61,7 +62,7 @@ blogRouter.use("/*", async (c, next) => {
 
 blogRouter.post('/', async (c) => {
   const body = await c.req.json();
-  const { success } = createBlogInput.safeParse(body);
+  const { success, data } = createBlogInput.safeParse(body); // Ensure validation
   if (!success) {
     c.status(411);
     return c.json({ message: 'Inputs not correct' });
@@ -71,16 +72,18 @@ blogRouter.post('/', async (c) => {
   const prisma = new PrismaClient({ datasourceUrl: c.env.DATABASE_URL }).$extends(withAccelerate());
 
   // Step 1: Create the blog
+  console.log(data);
   const blog = await prisma.blog.create({
     data: {
-      title: body.title,
-      content: body.content,
+      title: data.title,
+      content: JSON.stringify(data.content), // Save Editor.js content as JSON
+      bannerImage: data.bannerImage,
       authorId,
+      topics: { set: data.topics }, // Assuming your schema uses a string[] for topics
     },
   });
 
-  // Step 2: Save FCM token of the author
-  
+  // Step 2: Save FCM token of the author (optional, if not already saved)
 
   // Step 3: Fetch followers with FCM tokens
   const followers = await prisma.follow.findMany({
@@ -88,52 +91,40 @@ blogRouter.post('/', async (c) => {
     select: { follower: { select: { fcmtoken: true } }, followerId: true },
   });
 
-
   const jwt = c.get("token");
-  console.log(jwt);
   const accessToken = await getAccessToken(jwt);
   const fcmTokens = followers
-    .map((follower) => follower.follower.fcmtoken)
-    .filter((token) => token);
+    .map((follower:any) => follower.follower.fcmtoken)
+    .filter((token:any) => token);
 
   // Step 5: Send notifications
   if (fcmTokens.length > 0) {
-    //console.log(fcmTokens[0])
-    fcmTokens.forEach(async (token)=>{
+    for (const token of fcmTokens) {
       const payload = {
         message: {
-          token:token,
+          token,
           notification: {
             title: "New Blog Post",
-            body: "A new blog post has been published!",
+            body: `A new blog post titled "${data.title}" has been published!`,
           },
         },
       };
-    
- 
-       console.log(accessToken);
+
       try {
-       
-        const response = await axios.post(
+        await axios.post(
           c.env.URL,
           payload,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${accessToken}` } }
         );
-     
-        //return (response.data);
       } catch (error) {
         console.error("Error sending FCM message:", error);
       }
-    })
+    }
   }
 
-  // Step 6: Optionally store notifications in your database
-  const notifications = followers.map((follower) => ({
-    message: `New blog post published: ${body.title}`,
+  // Step 6: Store notifications in the database
+  const notifications = followers.map((follower:any) => ({
+    message: `New blog post published: ${data.title}`,
     recipientId: follower.followerId,
   }));
 
@@ -141,6 +132,7 @@ blogRouter.post('/', async (c) => {
 
   return c.json({ id: blog.id });
 });
+
 
 // Update blog and notify followers
 blogRouter.put('/', async (c) => {
@@ -172,8 +164,8 @@ blogRouter.put('/', async (c) => {
   });
 
   // Create a notification for each follower who has not reported the blog
-  await Promise.all(followers.map(async (follower) => {
-    if (!reporters.find((reporter) => reporter.userId === follower.followerId)) {
+  await Promise.all(followers.map(async (follower:any) => {
+    if (!reporters.find((reporter:any) => reporter.userId === follower.followerId)) {
       await prisma.notification.create({
         data: {
           recipientId: follower.followerId,
@@ -274,6 +266,8 @@ blogRouter.get('/:id', async (c) => {
         content: true,
         authorId: true,
         createdAt:true,
+        bannerImage:true,
+        topics:true,
         author: { select: { name: true } },
       },
     });

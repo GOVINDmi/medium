@@ -25,16 +25,19 @@ model User {
 model Blog {
   id          String   @id @default(uuid())  
   authorId    Int
-  content     String
+  content     Json     // Adjusted for structured content from Editor.js
   title       String
   published   Boolean  @default(false)
+  bannerImage String?  // URL of the top banner image
   author      User     @relation(fields: [authorId], references: [id])
   reports     Report[]
   createdAt   DateTime @default(now())
   reportCount Int      @default(0)  
-  likes       Int      @default(0) // Track likes
-  comments    Comment[] // Relation to comments
+  likes       Int      @default(0)
+  comments    Comment[] 
+  topics      String[] // Array of topics
 }
+
 
 
 model Follow {
