@@ -21,7 +21,7 @@ export const storage = getStorage(app);
 export const requestFirebaseToken = async (vapidKey: string) => {
   try {
     // Register the service worker
-    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js',  {
       scope: '/',
     });
     console.log('Service Worker registered:', registration);

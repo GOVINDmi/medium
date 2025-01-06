@@ -10,6 +10,8 @@ export interface Blog {
     "id": string;
     "authorId":number
     "createdAt":Date,
+    "bannerImage":string,
+    "topics":string[],
     "author": {
         "name": string;
         "id": number
